@@ -1,0 +1,2 @@
+Highscores:
+Danya : 1000
