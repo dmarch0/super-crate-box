@@ -15,9 +15,9 @@ class Player(pg.sprite.Sprite):
     def __init__(self, canvas, img_path, x, y):
         pg.sprite.Sprite.__init__(self)
         #self.image = pg.image.load(img_path)
-        self.image = pg.Surface((20,20))
+        self.image = pg.image.load("img\\sprites\\player.gif")
         self.rect = self.image.get_rect()
-        pg.draw.rect(self.image, RED, self.rect)
+        #pg.draw.rect(self.image, (255, 99, 71), self.rect)
         self.rect.x = x
         self.rect.y = y
         self.vel_y = 0
@@ -33,10 +33,14 @@ class Player(pg.sprite.Sprite):
         keys = pg.key.get_pressed()
         if keys[pg.K_LEFT]:
             self.direction = -1
-            self.facing = -1
+            if self.facing > 0:
+                self.facing = -1
+                self.image = pg.transform.flip(self.image, True, False)
         if keys[pg.K_RIGHT]:
             self.direction = 1
-            self.facing = 1
+            if self.facing < 0:
+                self.facing = 1
+                self.image = pg.transform.flip(self.image, True, False)
         self.vel_x = self.direction * self.speed
         if keys[pg.K_UP] and self.can_jump:
             jump_sound.play()
@@ -67,18 +71,23 @@ class Enemy(pg.sprite.Sprite):
         pg.sprite.Sprite.__init__(self)
         self.type = random.choice((True, False))
         if self.type:
-            self.image = pg.image.load("img\\enemysmall.png")
+            self.image = pg.image.load("img\\sprites\\tree.gif")
+            self.image = pg.transform.scale(self.image, (70, 70))
+            self.rect = self.image.get_rect()
+            #pg.draw.rect(self.image, (165, 42, 42), self.rect)
             self.hp = SMALL_HP
             self.speed = SMALL_SPEED
         elif not self.type:
-            self.image = pg.image.load("img\\enemybig.png")
+            self.image = pg.image.load("img\\sprites\\croc.gif")
+            self.image = pg.transform.scale(self.image, (30, 30))
+            self.rect = self.image.get_rect()
             self.hp = BIG_HP
             self.speed = BIG_SPEED
         self.blocks = blocks
         self.projectiles = projectiles
         self.flaming = False
         self.in_air = True
-        self.rect = self.image.get_rect()
+        #self.rect = self.image.get_rect()
         self.rect.center = SPAWN_POS
         self.direction = random.choice((-1, 1))
         self.vel_y = 0

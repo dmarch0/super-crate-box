@@ -29,7 +29,8 @@ class Game:
         self.init_weapons()
         self.crates.add(Crate(random.choice(self.crate_spawn_poss)))
         self.player = Player(self.canvas, "img\\player.png", START_POS_X, START_POS_Y)
-        self.player.weapon = self.weapons["laser"]
+        self.player.weapon = self.weapons["shotgun"]
+        self.current_weapon = "Shotgun"
         self.playing = True
         pg.display.flip()
         while self.playing:
@@ -86,6 +87,7 @@ class Game:
         #self.player_g.draw(self.canvas)
         self.player.draw(self.canvas)
         self.draw_text(str(self.score), 30, BLACK, WIDTH / 2, 30)
+        self.draw_text(str(self.current_weapon), 30, BLACK,100, 50)
         pg.display.flip()
 
     def check_collision(self):
@@ -170,15 +172,6 @@ class Game:
 
     def on_shot_fired(self):
         if self.player.weapon.type == "proj":
-            """
-            for bullet in range(self.player.weapon.bullets_per_shot):
-                dir_x = self.player.facing
-                dir_y = random.uniform(-self.player.weapon.spread, self.player.weapon.spread)
-                length = (dir_x ** 2 + dir_y ** 2) ** 0.5
-                dir_x /= length
-                dir_y /= length
-                self.projectiles.add(Projectile(self.player, self.player.weapon, dir_x, dir_y))
-            """
             self.init_projectile(self.projectiles)
         elif self.player.weapon.type == "expl":
             self.init_projectile(self.explosives)
@@ -189,7 +182,7 @@ class Game:
     def init_projectile(self, group):
         for bullet in range(self.player.weapon.bullets_per_shot):
             dir_x = self.player.facing
-            dir_y = random.uniform(self.player.weapon.spread, 0)
+            dir_y = random.uniform(-self.player.weapon.spread/2, self.player.weapon.spread/2)
             length = (dir_x ** 2 + dir_y ** 2) ** 0.5
             dir_x /= length
             dir_y /= length
@@ -198,7 +191,8 @@ class Game:
     def on_crate_pickup(self):
         pickup_sound.play()
         self.crates.add(Crate(random.choice(self.crate_spawn_poss)))
-        self.player.weapon = self.weapons[random.choice(list(self.weapons.keys()))]
+        self.current_weapon = random.choice(list(self.weapons.keys()))
+        self.player.weapon = self.weapons[self.current_weapon]
         self.score +=1
 
     def init_level(self):
@@ -217,7 +211,7 @@ class Game:
     def init_weapons(self):
         #bullet size, reload time(ms), bullet speed, bullets per shot, spread, damage, lifetime(not implemented yet), knockback, recoil
         self.weapons["pistol"] = Weapon(10, 200, 7, 1, 0, 10, 10000, 5, 0, "proj")
-        self.weapons["shotgun"] = Weapon(10, 1000, 7, 8, 1, 5, 10000, 5, 10, "proj")
+        self.weapons["shotgun"] = Weapon(10, 1000, 7, 32, 1, 5, 10000, 5, 10, "proj")
         self.weapons["machinegun"] = Weapon(10, 50, 7, 1, 0.1, 3, 10000, 5, 10, "proj")
         self.weapons["slowgun"] = Weapon(20, 2000, 3, 1, 0, 40, 10000, 50, 30, "proj")
         self.weapons["laser"] = Weapon(20, 1000, 5, 1, 0, 0.3, 1000, 1, 1, "beam")
