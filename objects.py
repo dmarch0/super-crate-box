@@ -154,7 +154,7 @@ class Laser(pg.sprite.Sprite):
             self.rect.left = self.player.rect.right
         self.rect.centery = self.player.rect.centery
     def animate(self):
-        self.height -= 2
+        self.height -= 0.5
         if self.height <= 0:
             self.kill()
             return

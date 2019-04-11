@@ -10,7 +10,7 @@ class Game:
         self.clock = pg.time.Clock()
         self.running = True
         self.font_name = pg.font.match_font(FONT_NAME)
-        self.bg_image = pg.image.load("img\\bg2.jpg")
+        self.bg_image = pg.image.load("img\\citybg2.png")
         self.bg_image = pg.transform.scale(self.bg_image, (720, 480))
 
     def new(self):
@@ -29,7 +29,7 @@ class Game:
         self.init_weapons()
         self.crates.add(Crate(random.choice(self.crate_spawn_poss)))
         self.player = Player(self.canvas, "img\\player.png", START_POS_X, START_POS_Y)
-        self.player.weapon = self.weapons["explosive"]
+        self.player.weapon = self.weapons["laser"]
         self.playing = True
         pg.display.flip()
         while self.playing:
@@ -189,7 +189,7 @@ class Game:
     def init_projectile(self, group):
         for bullet in range(self.player.weapon.bullets_per_shot):
             dir_x = self.player.facing
-            dir_y = random.uniform(0, self.player.weapon.spread)
+            dir_y = random.uniform(self.player.weapon.spread, 0)
             length = (dir_x ** 2 + dir_y ** 2) ** 0.5
             dir_x /= length
             dir_y /= length
