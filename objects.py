@@ -102,7 +102,7 @@ class Crate(pg.sprite.Sprite):
         self.rect.center = crate_spawn
 
 class Weapon(pg.sprite.Sprite):
-    def __init__(self, bullet_size, reload_time, bullet_speed, bullets_per_shot, spread, damage, bullet_lifetime, knockback, recoil):
+    def __init__(self, bullet_size, reload_time, bullet_speed, bullets_per_shot, spread, damage, bullet_lifetime, knockback, recoil, type):
         self.reload_time = reload_time
         self.bullet_speed = bullet_speed
         self.bullets_per_shot = bullets_per_shot
@@ -112,6 +112,7 @@ class Weapon(pg.sprite.Sprite):
         self.recoil = recoil
         self.bullet_size = bullet_size
         self.bullet_lifetime = bullet_lifetime
+        self.type = type
 
 class Projectile(pg.sprite.Sprite):
     def __init__(self, player, weapon, dir_x, dir_y):
@@ -130,3 +131,60 @@ class Projectile(pg.sprite.Sprite):
     def update(self):
         self.rect.x += self.dir_x * self.speed
         self.rect.y += self.dir_y * self.speed
+
+class Laser(pg.sprite.Sprite):
+    def __init__(self, player,):
+        pg.sprite.Sprite.__init__(self)
+        self.height = 20
+        self.image = pg.Surface((10000, self.height))
+        self.rect = self.image.get_rect()
+        pg.draw.rect(self.image, RED, self.rect)
+        if player.facing < 0:
+            self.rect.right = player.rect.left
+        elif player.facing > 0:
+            self.rect.left = player.rect.right
+        self.rect.centery = player.rect.centery
+        self.damage_per_tick = player.weapon.damage
+        self.player = player
+    def update(self):
+        self.animate()
+        if self.player.facing < 0:
+            self.rect.right = self.player.rect.left
+        elif self.player.facing > 0:
+            self.rect.left = self.player.rect.right
+        self.rect.centery = self.player.rect.centery
+    def animate(self):
+        self.height -= 2
+        if self.height <= 0:
+            self.kill()
+            return
+        self.image = pg.Surface((10000, self.height))
+        self.rect = self.image.get_rect()
+        pg.draw.rect(self.image, RED, self.rect)
+
+class Explosion(pg.sprite.Sprite):
+    def __init__(self, radius, pos_x, pos_y, projectile):
+        self.radius = radius
+        pg.sprite.Sprite.__init__(self)
+        self.image = pg.Surface((radius*2, radius*2), pg.SRCALPHA, 32)
+        self.image = self.image.convert_alpha()
+        self.rect = self.image.get_rect()
+        self.color = WHITE
+        pg.draw.circle(self.image, self.color, (radius, radius), radius)
+        self.rect.center = (pos_x, pos_y)
+        self.timer = pg.time.get_ticks()
+        self.birthtime = pg.time.get_ticks()
+        self.lifetime = 10000
+    def update(self):
+        if pg.time.get_ticks() - self.birthtime >= self.lifetime:
+            self.kill()
+        self.animate()
+    def animate(self):
+        if pg.time.get_ticks() - self.timer >= 100:
+            self.timer = pg.time.get_ticks()
+            if self.color == WHITE:
+                self.color = BLACK
+                pg.draw.circle(self.image, self.color, (self.radius, self.radius), self.radius)
+            elif self.color == BLACK:
+                self.color = WHITE
+                pg.draw.circle(self.image, self.color, (self.radius, self.radius), self.radius)

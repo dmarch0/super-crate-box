@@ -1,7 +1,6 @@
 import pygame as pg
 from settings import *
 from objects import *
-import re
 
 class Game:
     def __init__(self):
@@ -21,13 +20,14 @@ class Game:
         self.weapons = {}
         self.enemies = pg.sprite.Group()
         self.projectiles = pg.sprite.Group()
+        self.beams = pg.sprite.Group()
         self.enemies.add(Enemy(self.canvas, self.blocks, self.projectiles))
         self.crates = pg.sprite.Group()
         self.init_level()
         self.init_weapons()
         self.crates.add(Crate(random.choice(self.crate_spawn_poss)))
         self.player = Player(self.canvas, "img\\player.png", START_POS_X, START_POS_Y)
-        self.player.weapon = self.weapons["pistol"]
+        self.player.weapon = self.weapons["laser"]
         self.playing = True
         pg.display.flip()
         while self.playing:
@@ -45,6 +45,7 @@ class Game:
         self.blocks.update()
         self.enemies.update()
         self.projectiles.update()
+        self.beams.update()
         self.crates.update()
         self.check_collision()
         #print(self.clock.get_fps())
@@ -75,6 +76,7 @@ class Game:
         self.enemies.draw(self.canvas)
         self.projectiles.draw(self.canvas)
         self.crates.draw(self.canvas)
+        self.beams.draw(self.canvas)
         #self.player_g.draw(self.canvas)
         self.player.draw(self.canvas)
         self.draw_text(str(self.score), 30, BLACK, WIDTH / 2, 30)
@@ -132,6 +134,12 @@ class Game:
                         enemy.direction = - enemy.direction
                 elif not pg.sprite.collide_rect(enemy, block):
                     enemy.in_air = True
+                for beam in self.beams:
+                    if pg.sprite.collide_rect(beam, enemy):
+                        print("hit!")
+                        enemy.hp -= beam.damage_per_tick
+                        if enemy.hp <= 0:
+                            enemy.kill()
                 for projectile in self.projectiles:
                     if pg.sprite.collide_rect(block, projectile):
                         projectile.kill()
@@ -146,13 +154,16 @@ class Game:
                             enemy.kill()
 
     def on_shot_fired(self):
-        for bullet in range(self.player.weapon.bullets_per_shot):
-            dir_x = self.player.facing
-            dir_y = random.uniform(-self.player.weapon.spread, self.player.weapon.spread)
-            length = (dir_x ** 2 + dir_y ** 2) ** 0.5
-            dir_x /= length
-            dir_y /= length
-            self.projectiles.add(Projectile(self.player, self.player.weapon, dir_x, dir_y))
+        if self.player.weapon.type == "proj":
+            for bullet in range(self.player.weapon.bullets_per_shot):
+                dir_x = self.player.facing
+                dir_y = random.uniform(-self.player.weapon.spread, self.player.weapon.spread)
+                length = (dir_x ** 2 + dir_y ** 2) ** 0.5
+                dir_x /= length
+                dir_y /= length
+                self.projectiles.add(Projectile(self.player, self.player.weapon, dir_x, dir_y))
+        elif self.player.weapon.type == "beam":
+            self.beams.add(Laser(self.player))
         pg.time.set_timer(RELOAD, self.player.weapon.reload_time)
 
     def on_crate_pickup(self):
@@ -176,10 +187,11 @@ class Game:
 
     def init_weapons(self):
         #bullet size, reload time(ms), bullet speed, bullets per shot, spread, damage, lifetime(not implemented yet), knockback, recoil
-        self.weapons["pistol"] = Weapon(10, 200, 7, 1, 0, 10, 10000, 5, 0)
-        self.weapons["shotgun"] = Weapon(10, 1000, 7, 8, 1, 5, 10000, 5, 10)
-        self.weapons["machinegun"] = Weapon(10, 50, 7, 1, 0.1, 3, 10000, 5, 10)
-        self.weapons["slowgun"] = Weapon(20, 2000, 3, 1, 0, 40, 10000, 50, 30)
+        self.weapons["pistol"] = Weapon(10, 200, 7, 1, 0, 10, 10000, 5, 0, "proj")
+        self.weapons["shotgun"] = Weapon(10, 1000, 7, 8, 1, 5, 10000, 5, 10, "proj")
+        self.weapons["machinegun"] = Weapon(10, 50, 7, 1, 0.1, 3, 10000, 5, 10, "proj")
+        self.weapons["slowgun"] = Weapon(20, 2000, 3, 1, 0, 40, 10000, 50, 30, "proj")
+        self.weapons["laser"] = Weapon(20, 1000, 5, 1, 0, 0.3, 1000, 1, 1, "beam")
 
     def draw_text(self, text, size, text_color, x, y):
         font = pg.font.Font(self.font_name, size)
