@@ -174,7 +174,8 @@ class Explosion(pg.sprite.Sprite):
         self.rect.center = (pos_x, pos_y)
         self.timer = pg.time.get_ticks()
         self.birthtime = pg.time.get_ticks()
-        self.lifetime = 10000
+        self.lifetime = 300
+        self.damage_per_tick = projectile.damage
     def update(self):
         if pg.time.get_ticks() - self.birthtime >= self.lifetime:
             self.kill()

@@ -21,13 +21,15 @@ class Game:
         self.enemies = pg.sprite.Group()
         self.projectiles = pg.sprite.Group()
         self.beams = pg.sprite.Group()
+        self.explosives = pg.sprite.Group()
+        self.explosions = pg.sprite.Group()
         self.enemies.add(Enemy(self.canvas, self.blocks, self.projectiles))
         self.crates = pg.sprite.Group()
         self.init_level()
         self.init_weapons()
         self.crates.add(Crate(random.choice(self.crate_spawn_poss)))
         self.player = Player(self.canvas, "img\\player.png", START_POS_X, START_POS_Y)
-        self.player.weapon = self.weapons["laser"]
+        self.player.weapon = self.weapons["explosive"]
         self.playing = True
         pg.display.flip()
         while self.playing:
@@ -46,6 +48,8 @@ class Game:
         self.enemies.update()
         self.projectiles.update()
         self.beams.update()
+        self.explosions.update()
+        self.explosives.update()
         self.crates.update()
         self.check_collision()
         #print(self.clock.get_fps())
@@ -77,6 +81,8 @@ class Game:
         self.projectiles.draw(self.canvas)
         self.crates.draw(self.canvas)
         self.beams.draw(self.canvas)
+        self.explosives.draw(self.canvas)
+        self.explosions.draw(self.canvas)
         #self.player_g.draw(self.canvas)
         self.player.draw(self.canvas)
         self.draw_text(str(self.score), 30, BLACK, WIDTH / 2, 30)
@@ -134,6 +140,15 @@ class Game:
                         enemy.direction = - enemy.direction
                 elif not pg.sprite.collide_rect(enemy, block):
                     enemy.in_air = True
+                for explosive in self.explosives:
+                    if pg.sprite.collide_rect(explosive, enemy) or pg.sprite.collide_rect(explosive, block):
+                        self.explosions.add(Explosion(100, explosive.rect.center[0], explosive.rect.center[1], explosive))
+                        explosive.kill()
+                for explosion in self.explosions:
+                    if pg.sprite.collide_rect(explosion, enemy):
+                        enemy.hp -= explosion.damage_per_tick
+                        if enemy.hp <= 0:
+                            enemy.kill()
                 for beam in self.beams:
                     if pg.sprite.collide_rect(beam, enemy):
                         print("hit!")
@@ -155,6 +170,7 @@ class Game:
 
     def on_shot_fired(self):
         if self.player.weapon.type == "proj":
+            """
             for bullet in range(self.player.weapon.bullets_per_shot):
                 dir_x = self.player.facing
                 dir_y = random.uniform(-self.player.weapon.spread, self.player.weapon.spread)
@@ -162,9 +178,22 @@ class Game:
                 dir_x /= length
                 dir_y /= length
                 self.projectiles.add(Projectile(self.player, self.player.weapon, dir_x, dir_y))
+            """
+            self.init_projectile(self.projectiles)
+        elif self.player.weapon.type == "expl":
+            self.init_projectile(self.explosives)
         elif self.player.weapon.type == "beam":
             self.beams.add(Laser(self.player))
         pg.time.set_timer(RELOAD, self.player.weapon.reload_time)
+
+    def init_projectile(self, group):
+        for bullet in range(self.player.weapon.bullets_per_shot):
+            dir_x = self.player.facing
+            dir_y = random.uniform(0, self.player.weapon.spread)
+            length = (dir_x ** 2 + dir_y ** 2) ** 0.5
+            dir_x /= length
+            dir_y /= length
+            group.add(Projectile(self.player, self.player.weapon, dir_x, dir_y))
 
     def on_crate_pickup(self):
         pickup_sound.play()
@@ -192,6 +221,7 @@ class Game:
         self.weapons["machinegun"] = Weapon(10, 50, 7, 1, 0.1, 3, 10000, 5, 10, "proj")
         self.weapons["slowgun"] = Weapon(20, 2000, 3, 1, 0, 40, 10000, 50, 30, "proj")
         self.weapons["laser"] = Weapon(20, 1000, 5, 1, 0, 0.3, 1000, 1, 1, "beam")
+        self.weapons["explosive"] = Weapon(20, 1000, 5, 1, 0, 0.3, 1000, 1, 1, "expl")
 
     def draw_text(self, text, size, text_color, x, y):
         font = pg.font.Font(self.font_name, size)
